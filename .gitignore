@@ -3,3 +3,5 @@ whatsapp-bot/auth/
 data/data.json
 /patch*.js
 *.tmp
+data/config.json
+data/estado.json

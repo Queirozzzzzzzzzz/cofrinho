@@ -3,6 +3,7 @@ import qrcode from 'qrcode-terminal'
 import pino from 'pino'
 import { registrar } from '../manager/finance.js'
 import { comando } from '../manager/commands.js'
+import { iniciarRelatorio } from '../manager/report.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 const AUTH = path.join(path.dirname(fileURLToPath(import.meta.url)), 'auth')
@@ -14,7 +15,10 @@ async function start() {
   sock.ev.on('creds.update', saveCreds)
   sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
     if (qr) qrcode.generate(qr, { small: true })
-    if (connection === 'open') console.log('Conectado')
+    if (connection === 'open') {
+      console.log('Conectado')
+      iniciarRelatorio(sock)
+    }
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode
       if (code !== DisconnectReason.loggedOut) start()
