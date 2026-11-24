@@ -3,12 +3,13 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { lerConfig, gravarConfig, parseValor } from './config.js'
 import { relatorio } from './report.js'
+import { ENV } from './env.js'
 
 const FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'data', 'data.json')
 
 const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const fmtDate = iso => new Date(iso).toLocaleString('pt-BR', {
-  timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short',
+  timeZone: ENV.FUSO, dateStyle: 'short', timeStyle: 'short',
 })
 
 function load() {
@@ -66,11 +67,11 @@ export const comandos = [
   {
     nome: 'extrato',
     uso: '!extrato [N]',
-    descricao: 'Mostra os últimos N registros (padrão 10, máximo 50)',
+    descricao: 'Mostra os últimos N registros (padrão ' + ENV.EXTRATO_PADRAO + ', máximo ' + ENV.EXTRATO_MAXIMO + ')',
     run({ args, list }) {
       const ativos = list.filter(x => !x.disabled)
       if (!ativos.length) return 'Nenhum registro ainda.'
-      const n = Math.min(Math.max(Number(args) || 10, 1), 50)
+      const n = Math.min(Math.max(Number(args) || ENV.EXTRATO_PADRAO, 1), ENV.EXTRATO_MAXIMO)
       const linhas = ativos.slice(-n).map(x =>
         '#' + x.id + ' ' + (x.type === 'entrada' ? '➕ ' : '➖ ') + brl(x.value) + ' | ' + fmtDate(x.date) +
         (x.description ? '\n    ' + x.description : ''))
@@ -81,7 +82,7 @@ export const comandos = [
     nome: 'remover',
     uso: '!remover ID',
     descricao: 'Desabilita um registro pelo ID (ele continua salvo)',
-    run({ args, all, list }) {
+    run({ args, all, list, number }) {
       if (!/^\d+$/.test(args)) return 'Use: !remover ID'
       const id = Number(args)
       const r = list.find(x => x.id === id)
@@ -89,8 +90,16 @@ export const comandos = [
       if (r.disabled) return 'ID ' + id + ' já está desabilitado.'
       r.disabled = true
       r.disabledAt = new Date().toISOString()
+      let extra = ''
+      if (r.reservaDescontada) {
+        const cfg = lerConfig()
+        const u = cfg[number] || (cfg[number] = {})
+        u.reserva = Math.round(((u.reserva || 0) + r.reservaDescontada) * 100) / 100
+        gravarConfig(cfg)
+        extra = '\n🛟 Reserva devolvida: ' + brl(r.reservaDescontada)
+      }
       save(all)
-      return '🗑️ Desabilitado #' + id + ': ' + brl(r.value) + (r.description ? ' (' + r.description + ')' : '')
+      return '🗑️ Desabilitado #' + id + ': ' + brl(r.value) + (r.description ? ' (' + r.description + ')' : '') + extra
     },
   },
   comandoValor('reserva', 'reserva', '🛟', 'Reserva',

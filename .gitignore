@@ -5,3 +5,4 @@ data/data.json
 *.tmp
 data/config.json
 data/estado.json
+.env

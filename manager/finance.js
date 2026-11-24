@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { lerConfig, gravarConfig } from './config.js'
+import { ENV } from './env.js'
 
 const FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'data', 'data.json')
 const RE = /^([+-])\s*(\d+(?:[.,]\d+)*)(?:\s+([\s\S]*))?$/
@@ -42,8 +44,8 @@ export function registrar(m, text) {
     const [, d, mo, y] = dateMatch
     const chk = new Date(Date.UTC(+y, +mo - 1, +d))
     if (chk.getUTCFullYear() === +y && chk.getUTCMonth() === +mo - 1 && chk.getUTCDate() === +d) {
-      const hora = new Date(ts * 1000).toLocaleTimeString('en-GB', { timeZone: 'America/Sao_Paulo', hourCycle: 'h23' })
-      date = new Date(`${y}-${mo}-${d}T${hora}-03:00`).toISOString()
+      const hora = new Date(ts * 1000).toLocaleTimeString('en-GB', { timeZone: ENV.FUSO, hourCycle: 'h23' })
+      date = new Date(`${y}-${mo}-${d}T${hora}${ENV.FUSO_OFFSET_STR}`).toISOString()
       description = description.slice(0, dateMatch.index).trim()
     }
   }
@@ -51,14 +53,29 @@ export function registrar(m, text) {
   const data = load()
   if (!data[number]) data[number] = []
   const id = data[number].reduce((a, x) => Math.max(a, x.id || 0), 0) + 1
+  let descontado = 0
+  let reservaMsg = ''
+  if (type === 'saida') {
+    const cfg = lerConfig()
+    const atual = cfg[number]?.reserva || 0
+    if (atual > 0) {
+      descontado = Math.min(atual, value)
+      cfg[number].reserva = Math.round((atual - descontado) * 100) / 100
+      gravarConfig(cfg)
+      reservaMsg = '\n🛟 Reserva: ' + cfg[number].reserva.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) +
+        ' (-' + descontado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + ')'
+    }
+  }
+
   data[number].push({
     id,
     value,
     type,
     description,
     date,
+    ...(descontado ? { reservaDescontada: descontado } : {}),
   })
   save(data)
 
-  return `✅ ${type === 'entrada' ? 'Entrada' : 'Saída'} de ${value.toFixed(2)} registrada (ID ${id})`
+  return `✅ ${type === 'entrada' ? 'Entrada' : 'Saída'} de ${value.toFixed(2)} registrada (ID ${id})` + reservaMsg
 }

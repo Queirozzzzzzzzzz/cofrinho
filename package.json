@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bot": "pm2 delete bot >/dev/null 2>&1; pm2 start ecosystem.config.cjs && pm2 save",
+    "bot:restart": "pm2 restart bot",
+    "bot:logs": "pm2 logs bot --lines 30",
+    "bot:stop": "pm2 stop bot"
   },
   "keywords": [],
   "author": "",
