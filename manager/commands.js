@@ -97,6 +97,13 @@ export const comandos = [
         u.reserva = Math.round(((u.reserva || 0) + r.reservaDescontada) * 100) / 100
         gravarConfig(cfg)
         extra = '\n🛟 Reserva devolvida: ' + brl(r.reservaDescontada)
+      } else if (r.reservaAdicionada) {
+        const cfg = lerConfig()
+        const u = cfg[number] || (cfg[number] = {})
+        const tirar = Math.min(u.reserva || 0, r.reservaAdicionada)
+        u.reserva = Math.round(((u.reserva || 0) - tirar) * 100) / 100
+        gravarConfig(cfg)
+        extra = '\n🛟 Reserva ajustada: -' + brl(tirar)
       }
       save(all)
       return '🗑️ Desabilitado #' + id + ': ' + brl(r.value) + (r.description ? ' (' + r.description + ')' : '') + extra

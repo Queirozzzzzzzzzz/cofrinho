@@ -6,3 +6,4 @@ data/data.json
 data/config.json
 data/estado.json
 .env
+data/bot.lock

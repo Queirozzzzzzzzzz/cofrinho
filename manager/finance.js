@@ -52,6 +52,8 @@ export function registrar(m, text) {
 
   const data = load()
   if (!data[number]) data[number] = []
+  const msgId = m.key.id
+  if (msgId && data[number].some(x => x.msgId === msgId)) return null // mensagem repetida
   const id = data[number].reduce((a, x) => Math.max(a, x.id || 0), 0) + 1
   let descontado = 0
   let reservaMsg = ''
@@ -67,13 +69,26 @@ export function registrar(m, text) {
     }
   }
 
+  let adicionado = 0
+  if (type === 'entrada') {
+    const cfg = lerConfig()
+    const u = cfg[number] || (cfg[number] = {})
+    u.reserva = Math.round(((u.reserva || 0) + value) * 100) / 100
+    gravarConfig(cfg)
+    adicionado = value
+    const f = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    reservaMsg = '\n🛟 Reserva: ' + f(u.reserva) + ' (+' + f(value) + ')'
+  }
+
   data[number].push({
     id,
     value,
     type,
     description,
     date,
+    msgId,
     ...(descontado ? { reservaDescontada: descontado } : {}),
+    ...(adicionado ? { reservaAdicionada: adicionado } : {}),
   })
   save(data)
 
