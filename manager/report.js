@@ -91,7 +91,8 @@ async function verificar() {
 
   ocupado = true
   try {
-    const numeros = [...new Set([...Object.keys(lerJson('data.json')), ...Object.keys(lerConfig())])]
+    const cfgAtual = lerConfig()
+    const numeros = Object.keys(cfgAtual).filter(n => cfgAtual[n].ativo)
     for (const n of numeros) {
       try {
         await sockAtual.sendMessage(n + '@s.whatsapp.net', { text: relatorio(n) })

@@ -35,6 +35,7 @@ export function registrar(m, text) {
   const type = match[1] === '+' ? 'entrada' : 'saida'
   const jid = m.key.participant || m.key.remoteJid
   const number = jid.split('@')[0].split(':')[0]
+  if (!lerConfig()[number]?.ativo) return null // bot parado ou não iniciado
   const ts = Number(m.messageTimestamp) || Math.floor(Date.now() / 1000)
 
   let description = (match[3] || '').trim()

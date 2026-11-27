@@ -70,7 +70,10 @@ async function start() {
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return
     for (const m of messages) {
-      if (m.key.fromMe || jaProcessada(m)) continue
+      if (m.key.fromMe) continue
+      const chat = m.key.remoteJid || ''
+      if (!chat.endsWith('@s.whatsapp.net') && !chat.endsWith('@lid')) continue // só conversas privadas
+      if (jaProcessada(m)) continue
       const text = m.message?.conversation || m.message?.extendedTextMessage?.text
       if (text === '!ping') await sock.sendMessage(m.key.remoteJid, { text: 'pong' })
       let resp = null

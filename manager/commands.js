@@ -120,6 +120,34 @@ export const comandos = [
     run({ number }) { return relatorio(number) },
   },
   {
+    nome: 'iniciar',
+    sempre: true,
+    uso: '!iniciar',
+    descricao: 'Ativa o bot para você (registros, comandos e relatório semanal)',
+    run({ number }) {
+      const cfg = lerConfig()
+      const u = cfg[number] || (cfg[number] = {})
+      if (u.ativo) return '✅ O bot já está ativo. Use !ajuda para ver os comandos.'
+      u.ativo = true
+      gravarConfig(cfg)
+      return '✅ Bot iniciado! Use !ajuda para ver os comandos.'
+    },
+  },
+  {
+    nome: 'parar',
+    sempre: true,
+    uso: '!parar',
+    descricao: 'Desativa o bot para você (sem registros, comandos nem relatório). Seus dados ficam salvos',
+    run({ number }) {
+      const cfg = lerConfig()
+      const u = cfg[number]
+      if (!u || !u.ativo) return '⏸️ O bot já está parado. Use !iniciar para ativar.'
+      u.ativo = false
+      gravarConfig(cfg)
+      return '⏸️ Bot parado. Use !iniciar para voltar.'
+    },
+  },
+  {
     nome: 'ajuda',
     aliases: ['help'],
     uso: '!ajuda',
@@ -153,6 +181,7 @@ export function comando(m, text) {
 
   const jid = m.key.participant || m.key.remoteJid
   const number = jid.split('@')[0].split(':')[0]
+  if (!cmd.sempre && !lerConfig()[number]?.ativo) return null // bot parado ou não iniciado
   const all = load()
   const list = all[number] || []
   return cmd.run({ args: (match[2] || '').trim(), all, list, number })
