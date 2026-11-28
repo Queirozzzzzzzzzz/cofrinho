@@ -72,7 +72,9 @@ async function start() {
     for (const m of messages) {
       if (m.key.fromMe) continue
       const chat = m.key.remoteJid || ''
-      if (!chat.endsWith('@s.whatsapp.net') && !chat.endsWith('@lid')) continue // só conversas privadas
+      if (!chat.endsWith('@s.whatsapp.net') && !chat.endsWith('@lid') && !chat.endsWith('@g.us')) continue // privadas e grupos
+      const destino = chat.endsWith('@g.us') ? m.key.participant : chat // em grupo, responde no privado de quem enviou
+      if (!destino) continue
       if (jaProcessada(m)) continue
       const text = m.message?.conversation || m.message?.extendedTextMessage?.text
       if (text === '!ping') await sock.sendMessage(m.key.remoteJid, { text: 'pong' })
@@ -82,8 +84,8 @@ async function start() {
         resp = '⚠️ Erro interno ao processar. Tente de novo.'
       }
       if (resp) {
-        try { await sock.sendMessage(m.key.remoteJid, { text: resp }) } catch (e) {
-          console.error('Falha ao responder ' + m.key.remoteJid + ': ' + e.message)
+        try { await sock.sendMessage(destino, { text: resp }) } catch (e) {
+          console.error('Falha ao responder ' + destino + ': ' + e.message)
         }
       }
     }

@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'bottsapp-bot',
+    name: 'bot',
     script: 'whatsapp-bot/index.js',
     cwd: __dirname,
     watch: ['whatsapp-bot', 'manager', '.env'],
